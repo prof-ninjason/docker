@@ -1,0 +1,230 @@
+[Docker Development]
+
+docker pull mysql
+docker images
+docker ps -a
+
+for j in `cat`; do docker rm -f $j; done
+for j in `cat`; do docker rmi -f $j; done
+
+docker run -d -e MYSQL_ROOT_PASSWORD=root -e MYSQL_USER=security -e MYSQL_PASSWORD=password -e MYSQL_DATABASE=dev-db -p 3306:3306 --name mysql-security-1 jcrochon/mysql-security
+
+docker run -d -p 3306:3306 --name mysql-security-1 mysql-security:1
+docker exec -it mysql-security-1 bash
+
+mysql -u security -p
+mysql> show databases; use dev-db; show tables; select * from wireless;
+
+docker login
+docker commit 34e4f52d7fc3 mysql-security:2
+docker tag mysql-security:2 jcrochon/mysql-security
+docker push jcrochon/mysql-security
+
+docker inspect mysql-security-1
+
+docker stop mysql-security-1
+docker start mysql-security-1
+
+perl mysql-test.pl subs.pm
+
+* Disconnect, or detach, from the shell without exiting use the escape sequence Ctrl-p + Ctrl-q
+
+
+[Comodo Certificate Testing]
+https://hub.docker.com/_/httpd/
+docker pull httpd
+docker run -dit --hostname cert-testing.cc.uic.edu --name apache-security-1 -p 80:80 -p443:443 -v "$PWD":/usr/local/apache2/htdocs/ jcrochon/apache-security
+docker cp ./my-httpd.conf my-apache-app:/usr/local/apache2/htdocs/conf/
+docker exec -it my-apache-app bash
+
+
+https://cert-testing.cc.uic.edu/my-httpd.conf
+0.0.0.0->80:80 & 0.0.0.0->443:443
+
+C:\Windows\System32\drivers\etc\hosts
+127.0.0.1	localhost	cert-testing.cc.uic.edu	# temp DNS entry for cert testing
+
+
+[Linking Containers]
+docker run -d -p 3306:3306 --name test-mysql jcrochon/mysql-security; docker run -d --name test-drupal-mysql -p 8080:80 --link test-mysql jcrochon/test-drupal
+
+http://localhost:8080
+dev-db:test-mysql
+root:root
+security:password
+
+
+DNS fIX
+nmcli dev show | grep 'IP4.DNS'
+docker run --rm busybox nslookup google.com
+sudo gedit /etc/docker/daemon.json; sudo service docker restart
+{
+  "dns": ["10.0.2.2", "8.8.8.8"]
+}
+
+
+----------------------------------------
+
+SPLUNK
+
+docker kill $(docker ps -q); docker rm -f $(docker ps -a -q); docker rmi -f $(docker images -q); docker ps ; docker images
+docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $(docker ps -q)
+
+echo "Creating docker network, so all containers will see each other"
+docker network create splunk
+echo "Starting deployment server for forwarders"
+docker run -d --net splunk \
+  --hostname splunkdeploymentserver \
+  --name splunkdeploymentserver \
+  --publish 8000 \
+  --env SPLUNK_START_ARGS="--accept-license --answer-yes --seed-passwd ChangeM3!" \
+  --env SPLUNK_ENABLE_DEPLOY_SERVER=true \
+  splunk/splunk
+echo "Starting Splunk Enterprise"
+docker run -d --net splunk \
+  --hostname splunkenterprise \
+  --name splunkenterprise \
+  --publish 8000 \
+  --env SPLUNK_START_ARGS="--accept-license --answer-yes --seed-passwd ChangeM3!" \
+  --env SPLUNK_ENABLE_LISTEN=9997 \
+  splunk/splunk
+echo "Starting forwarder, which forwards data to Splunk"
+docker run -d --net splunk \
+  --hostname forwarder \
+  --name forwarder \
+  --env SPLUNK_START_ARGS="--accept-license --answer-yes --seed-passwd ChangeM3!" \
+  --env SPLUNK_FORWARD_SERVER='splunkenterprise:9997' \
+  --env SPLUNK_FORWARD_SERVER_ARGS='-method clone' \
+  --env SPLUNK_ADD='udp 1514' \
+  --env SPLUNK_DEPLOYMENT_SERVER='splunkdeploymentserver:8089' \
+  splunk/universalforwarder
+
+
+
+[Docker Kernel Forwarding]
+sudo -i
+sysctl net.ipv4.conf.all.forwarding=1
+iptables -P FORWARD ACCEPT
+
+
+docker-machine ip
+
+
+
+
+
+
+
+
+docker run -d --net splunk_splunk --hostname splunkdeploymentserver --name splunkdeploymentserver --publish 8000 --env SPLUNK_START_ARGS="--accept-license --answer-yes --seed-passwd ChangeM3!" --env SPLUNK_ENABLE_DEPLOY_SERVER=true splunk/splunk ; docker run -d --net splunk_splunk --hostname splunkenterprise --name splunkenterprise --publish 8000 --env SPLUNK_START_ARGS="--accept-license --answer-yes --seed-passwd ChangeM3!" --env SPLUNK_ENABLE_LISTEN=9997 splunk/splunk ; docker run -d --net splunk_splunk --hostname forwarder --name forwarder --env SPLUNK_START_ARGS="--accept-license --answer-yes --seed-passwd ChangeM3!" --env SPLUNK_FORWARD_SERVER='splunkenterprise:9997' --env SPLUNK_FORWARD_SERVER_ARGS='-method clone' --env SPLUNK_ADD='udp 1514' --env SPLUNK_DEPLOYMENT_SERVER='splunkdeploymentserver:8089' splunk/universalforwarder
+
+
+
+
+
+
+docker run -d -p 8000:8000 -e "SPLUNK_START_ARGS=--accept-license" -e "SPLUNK_PASSWORD=ChangeM3!" --name splunk-trainer splunk/splunk:latest
+
+docker build . -t splunk-trainer
+docker run -d -p 8000:8000 --name splunk-trainer splunk-trainer:latest
+docker logs -f splunk-trainer
+
+docker cp mood_radiator/ splunk-trainer:/opt/splunk/etc/apps/mood_radiator/
+
+docker exec splunk-trainer sudo /opt/splunk/bin/splunk status|restart
+
+sudo install -m 0755 -d /etc/apt/keyrings ; curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg ; sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+
+docker run --name pfsense -p 22:22 -p 80:80 -p 443:443 -d jrochon/pfsense:latest
+
+https://docs.docker.com/engine/reference/commandline/login/#credentials-store
+
+docker login -u jrochon --password-stdin docker.io
+
+https://docs.docker.com/engine/reference/commandline/login/#credentials-store
+
+
+==========================================================================================================
+
+ELK Elastic Stack
+
+sysctl vm.max_map_count=262144
+
+docker network create elastic
+docker pull docker.elastic.co/elasticsearch/elasticsearch:8.7.0
+docker run --name es-node01 --net elastic -p 9200:9200 -p 9300:9300 -t docker.elastic.co/elasticsearch/elasticsearch:8.7.0
+
+http://localhost:5601
+
+
+docker exec -it elasticsearch /usr/share/elasticsearch/bin/elasticsearch-create-enrollment-token -s kibana
+
+docker exec -it kibana bin/kibana-encryption-keys generate -q
+
+======================================================================================
+# docker-compose.yml
+# docker compose up elasticsearch logstash kibana
+# docker compose up
+
+version: '3'
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.7.0
+    container_name: elasticsearch
+    environment:
+      - node.name=elasticsearch
+      - cluster.name=elasticsearch_cluster
+      - discovery.seed_hosts=elasticsearch
+      - cluster.initial_master_nodes=elasticsearch
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - elk
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.7.0
+    container_name: logstash
+    environment:
+      - "LS_JAVA_OPTS=-Xmx256m -Xms256m"
+      - "xpack.monitoring.elasticsearch.hosts=http://elasticsearch:9200"
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+    ports:
+      - "5000:5000"
+    networks:
+      - elk
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.7.0
+    container_name: kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - "xpack.security.enabled=false"
+    ports:
+      - "5601:5601"
+    networks:
+      - elk
+
+volumes:
+  elasticsearch_data:
+
+networks:
+  elk:
+
+======================================================================================
+
