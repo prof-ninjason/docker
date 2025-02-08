@@ -32,6 +32,10 @@ services:
 volumes:
   ollama:
   open-webui:
+
+===========================================
+docker kill $(docker ps -q); docker rm -vf $(docker ps -a -q); docker rmi -f $(docker images -q);docker compose down;docker volume rm ollama open-webui;docker volume prune -f;docker rmi ghcr.io/open-webui/open-webui:main ollama/ollama;rm -rf ~/.ollama ~/.local/share/ollama ~/.open-webui;sudo service docker restart
+
 ===========================================
 Based on your docker-compose.yml, you are using named volumes (ollama and open-webui). To completely reset Open-WebUI and Ollama, including all stored configurations and login data, follow these steps:
 
