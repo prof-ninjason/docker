@@ -1,5 +1,5 @@
 ===========================================
-~/docker/ai-llm: docker-compose.yml
+docker compose -f ~/docker/ai-llm/docker-compose.yml up
 ===========================================
 services:
   webui:
@@ -36,6 +36,7 @@ docker exec -it ai-llm-ollama ollama pull deepseek-r1
 docker tag local-image:tagname new-repo:tagname
 docker push new-repo:tagname
 
+docker kill $(docker ps -q); docker rm -f $(docker ps -a -q) docker rmi -f $(docker images -q)
 docker stop $(docker ps -a -q)
 docker rm -f $(docker ps -aq)
 docker rmi -f $(docker images -aq)
