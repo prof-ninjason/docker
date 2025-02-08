@@ -107,14 +107,14 @@ docker rm -f $(docker ps -aq)
 docker rmi -f $(docker images -aq)
 docker ps -a; docker images
 
-docker commit 6eaae89591cc jrochon/webui
+docker commit 08aa25c17511 jrochon/open-webui
+docker tag 08aa25c17511 jrochon/open-webui:latest
+docker push jrochon/open-webui:latest
+
 docker commit a76673624339 jrochon/ollama
-
-docker tag 6eaae89591cc jrochon/webui:latest
 docker tag a76673624339 jrochon/ollama:latest
-
-docker push jrochon/webui:latest
 docker push jrochon/ollama:latest
+
 
 
 docker commit [container-id] [new-image-name]
