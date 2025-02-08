@@ -1,5 +1,5 @@
 ===========================================
-docker compose -f ~/docker/ai-llm/docker-compose.yml up
+docker compose -f ~/docker/ai-llm/docker-compose.yml up -d
 ===========================================
 services:
   webui:
