@@ -1,7 +1,6 @@
 services:
   webui:
-    #image: ghcr.io/open-webui/open-webui:main
-    image: jrochon/ai-llm-webui 
+    image: ghcr.io/open-webui/open-webui:main
     ports:
       - 3000:8080/tcp
     volumes:
@@ -12,8 +11,7 @@ services:
       - ollama
 
   ollama:
-    #image: ollama/ollama
-    image: jrochon/ai-llm-ollama
+    image: ollama/ollama
     expose:
       - 11434/tcp
     ports:
