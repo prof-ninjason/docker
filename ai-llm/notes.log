@@ -1,3 +1,6 @@
+
+Used with: http://github.com/prof-ninjason/docker/blob/main/ai-llm/docker-compose.yml⁠
+
 ===========================================
 docker compose -f ~/docker/ai-llm/docker-compose.yml up -d
 ===========================================
