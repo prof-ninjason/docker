@@ -30,7 +30,64 @@ volumes:
   ollama:
   open-webui:
 ===========================================
+Based on your docker-compose.yml, you are using named volumes (ollama and open-webui). To completely reset Open-WebUI and Ollama, including all stored configurations and login data, follow these steps:
 
+1. Stop and Remove the Running Containers
+Run the following commands to stop and remove the services:
+
+docker compose down
+
+Alternatively, if you are using an older Docker version:
+
+docker-compose down
+
+This will stop and remove all containers defined in docker-compose.yml.
+
+2. Remove the Named Volumes
+Since you are using Docker volumes to persist data, simply removing containers is not enough. You must delete the named volumes to remove stored data.
+
+Run:
+
+docker volume rm ollama open-webui
+
+To ensure no orphaned volumes exist, you can remove all unused volumes (be careful, as this will remove other unreferenced volumes as well):
+
+docker volume prune -f
+
+3. Remove the Docker Images
+If you want to completely reset the environment, also remove the Docker images:
+
+docker rmi ghcr.io/open-webui/open-webui:main ollama/ollama
+
+If you are unsure of the exact image names, list them with:
+
+docker images
+
+4. Delete Configuration Files (On Your Host Machine)
+Some configurations may be stored outside of Docker volumes. Manually check and delete:
+
+rm -rf ~/.ollama ~/.local/share/ollama ~/.open-webui
+
+5. Restart Docker (Optional but Recommended)
+Restart Docker to ensure all changes are applied:
+
+systemctl restart docker  # For Linux
+sudo service docker restart  # Some Linux distributions
+wsl --shutdown  # If using Docker in WSL (Windows)
+
+6. Verify Cleanup
+Run the following commands to check that everything is removed:
+
+docker ps -a  # Ensure no stopped containers exist
+docker images  # Ensure no images for Open-WebUI or Ollama remain
+docker volume ls  # Ensure volumes "ollama" and "open-webui" are gone
+
+7. Reinstall and Start Fresh
+Now, when you bring your containers back up, it will be a clean installation:
+
+docker compose up -d
+
+===========================================
 docker exec -it ai-llm-ollama ollama pull deepseek-r1
 
 docker tag local-image:tagname new-repo:tagname
