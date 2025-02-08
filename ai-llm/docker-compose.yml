@@ -1,7 +1,6 @@
 services:
   webui:
-    #image: jrochon/open-webui
-    image: jrochon/webui
+    image: jrochon/open-webui
     ports:
       - 3000:8080/tcp
     volumes:
