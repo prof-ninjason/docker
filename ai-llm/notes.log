@@ -11,7 +11,6 @@ docker exec -it test_kali_network_scanner /bin/bash
 docker rm -f kali_network_scanner
 docker container rename test_kali_network_scanner kali_network_scanner
 
-
 ===========================================
 Used with: http://github.com/prof-ninjason/docker/blob/main/ai-llm/docker-compose.yml⁠
 ===========================================
