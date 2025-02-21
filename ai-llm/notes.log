@@ -1,6 +1,19 @@
+===========================================
+TROUBLESHOOTING A FAILED CONTAINER
+===========================================
+docker run --name my_container -d --entrypoint sleep my_image:tag infinity
+docker exec -it my_container /bin/bash
+docker container rename old-name new-name
 
+docker run --name test_kali_network_scanner -d --entrypoint sleep kalilinux/kali-rolling:latest infinity
+docker exec -it test_kali_network_scanner /bin/bash
+
+docker rm -f kali_network_scanner
+docker container rename test_kali_network_scanner kali_network_scanner
+
+
+===========================================
 Used with: http://github.com/prof-ninjason/docker/blob/main/ai-llm/docker-compose.yml⁠
-
 ===========================================
 docker compose -f ~/docker/ai-llm/docker-compose.yml up -d
 ===========================================
@@ -121,6 +134,4 @@ docker commit [container-id] [new-image-name]
 
 
 docker images
-
-
 

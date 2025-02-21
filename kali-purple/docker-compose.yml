@@ -1,0 +1,19 @@
+version: '2'
+services:
+  kali:
+    image: kalilinux/kali-rolling:latest
+    container_name: kali_network_scanner
+    privileged: true
+    network_mode: bridge
+    environment:
+      - DISPLAY=${DISPLAY}
+    volumes:
+      - ./scan_results:/root/scan_results
+      - /tmp/.X11-unix:/tmp/.X11-unix  # For X11 forwarding
+    ports:
+      - "5900:5900"  # VNC port
+    command: >
+      bash -c "apt update && apt install -y kali-desktop-xfce tightvncserver &&
+      mkdir -p /root/.vnc && echo 'password' | vncpasswd -f > /root/.vnc/passwd &&
+      chmod 600 /root/.vnc/passwd && vncserver :0 -geometry 1280x800 -depth 24 &&
+      tail -f /dev/null"
